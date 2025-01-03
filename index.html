@@ -4,68 +4,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Crash Simulation</title>
+    <title>3D Car Crash Simulation</title>
     <style>
-        canvas {
-            border: 1px solid #000;
-            display: block;
-            margin: 0 auto;
-        }
         body {
-            text-align: center;
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+        #startButton {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <h1>Car Crash Simulation</h1>
-    <p>Click "Crash" to see the car collide with the wall.</p>
-    <button onclick="startSimulation()">Crash</button>
-    <canvas id="simulation"></canvas>
+    <button id="startButton">Crash</button>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/152/three.min.js"></script>
     <script>
-        // Setup Matter.js
-        const { Engine, Render, Runner, Bodies, World, Body, Events } = Matter;
+        // Setup scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        // Create engine and world
-        const engine = Engine.create();
-        const world = engine.world;
+        // Add ground
+        const groundGeometry = new THREE.PlaneGeometry(200, 200);
+        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x228b22, side: THREE.DoubleSide });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = Math.PI / 2;
+        ground.position.y = -1;
+        scene.add(ground);
 
-        // Setup render
-        const canvas = document.getElementById('simulation');
-        const render = Render.create({
-            canvas: canvas,
-            engine: engine,
-            options: {
-                width: 800,
-                height: 400,
-                wireframes: false,
-            },
-        });
+        // Add wall
+        const wallGeometry = new THREE.BoxGeometry(1, 5, 5);
+        const wallMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+        wall.position.set(10, 2, 0);
+        scene.add(wall);
 
-        Render.run(render);
-        const runner = Runner.create();
-        Runner.run(runner, engine);
+        // Add car
+        const carGeometry = new THREE.BoxGeometry(2, 1, 1);
+        const carMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        const car = new THREE.Mesh(carGeometry, carMaterial);
+        car.position.set(-5, 0, 0);
+        scene.add(car);
 
-        // Add ground and wall
-        const ground = Bodies.rectangle(400, 390, 810, 20, { isStatic: true });
-        const wall = Bodies.rectangle(750, 200, 20, 400, { isStatic: true });
-        World.add(world, [ground, wall]);
+        // Add wheels
+        const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.5, 32);
+        const wheelMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+        const frontWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        const backWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
 
-        // Add car (a rectangle and circles for a simple representation)
-        const carBody = Bodies.rectangle(100, 300, 80, 40, { restitution: 0.5 });
-        const frontWheel = Bodies.circle(80, 330, 15, { restitution: 0.5 });
-        const backWheel = Bodies.circle(120, 330, 15, { restitution: 0.5 });
+        frontWheel.rotation.z = Math.PI / 2;
+        backWheel.rotation.z = Math.PI / 2;
 
-        const car = Body.create({
-            parts: [carBody, frontWheel, backWheel],
-        });
-        World.add(world, car);
+        frontWheel.position.set(-5, -0.5, 0.6);
+        backWheel.position.set(-5, -0.5, -0.6);
 
-        // Function to simulate crash
-        function startSimulation() {
-            Body.setVelocity(car, { x: 10, y: 0 });
+        scene.add(frontWheel);
+        scene.add(backWheel);
+
+        // Set up the camera
+        camera.position.set(0, 5, 10);
+        camera.lookAt(0, 0, 0);
+
+        // Animation loop
+        let carMoving = false;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Move car if simulation is active
+            if (carMoving && car.position.x < 9) {
+                car.position.x += 0.1;
+                frontWheel.position.x += 0.1;
+                backWheel.position.x += 0.1;
+            }
+
+            renderer.render(scene, camera);
         }
+        animate();
+
+        // Start button event listener
+        document.getElementById("startButton").addEventListener("click", () => {
+            carMoving = true;
+        });
     </script>
 </body>
 </html>
