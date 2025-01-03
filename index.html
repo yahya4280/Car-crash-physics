@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Crash Simulation</title>
+    <style>
+        canvas {
+            border: 1px solid #000;
+            display: block;
+            margin: 0 auto;
+        }
+        body {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Car Crash Simulation</h1>
+    <p>Click "Crash" to see the car collide with the wall.</p>
+    <button onclick="startSimulation()">Crash</button>
+    <canvas id="simulation"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script>
+        // Setup Matter.js
+        const { Engine, Render, Runner, Bodies, World, Body, Events } = Matter;
+
+        // Create engine and world
+        const engine = Engine.create();
+        const world = engine.world;
+
+        // Setup render
+        const canvas = document.getElementById('simulation');
+        const render = Render.create({
+            canvas: canvas,
+            engine: engine,
+            options: {
+                width: 800,
+                height: 400,
+                wireframes: false,
+            },
+        });
+
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+
+        // Add ground and wall
+        const ground = Bodies.rectangle(400, 390, 810, 20, { isStatic: true });
+        const wall = Bodies.rectangle(750, 200, 20, 400, { isStatic: true });
+        World.add(world, [ground, wall]);
+
+        // Add car (a rectangle and circles for a simple representation)
+        const carBody = Bodies.rectangle(100, 300, 80, 40, { restitution: 0.5 });
+        const frontWheel = Bodies.circle(80, 330, 15, { restitution: 0.5 });
+        const backWheel = Bodies.circle(120, 330, 15, { restitution: 0.5 });
+
+        const car = Body.create({
+            parts: [carBody, frontWheel, backWheel],
+        });
+        World.add(world, car);
+
+        // Function to simulate crash
+        function startSimulation() {
+            Body.setVelocity(car, { x: 10, y: 0 });
+        }
+    </script>
+</body>
+</html>
